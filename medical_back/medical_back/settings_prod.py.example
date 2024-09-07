@@ -1,0 +1,44 @@
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from .settings import *
+
+BOT_TOKEN = ''
+BOT_NAME = ''
+
+PAYME_LOGIN = 'Paycom'
+PAYME_PASSWORD = ''
+
+PAYME_COURSE_LOGIN = 'Paycom'
+PAYME_COURSE_PASSWORD = ''
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': 5432,
+    }
+}
+
+sentry_sdk.init(
+    dsn=os.environ.get('SENTRY_URL', ''),
+    integrations=[DjangoIntegration()],
+    send_default_pii=True,
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
+
+FRONTEND_DOMAIN = 'https://app.crmneo.com'
+
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_PASSWORD = ''  # SendGrid API Key
+SERVER_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = ''
+
+
+STATIC_ROOT = 'static'
+MEDIA_ROOT = 'uploads'

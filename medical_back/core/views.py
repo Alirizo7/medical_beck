@@ -1,14 +1,17 @@
+
+from django.http import Http404
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from .models import Medication, Doctor, Patient, Procedure
+from .models import Medication, Doctor, Patient, Procedure, Appointment
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import RegisterDoctorSerializer, LoginSerializer, MedicationSerializer, ProfileSerializer, \
-    PatientSerializer, ProcedureSerializer
+from .serializers import LoginSerializer, MedicationSerializer, ProfileSerializer, \
+    PatientSerializer, ProcedureSerializer, RegisterDoctorSerializer, AppointmentSerializer
 
 
 @api_view(['POST'])
@@ -32,13 +35,51 @@ def login_doctor(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MedicationListView(generics.ListAPIView):
-    serializer_class = MedicationSerializer
+class MedicationAPIView(APIView):
+
+    def get(self, request):
+        user = request.user
+        medications = Medication.objects.filter(doctor__user=user)
+        serializer = MedicationSerializer(medications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MedicationCreateAPIView(APIView):
+    def post(self, request):
+        serializer = MedicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(doctor=request.user.doctor_profile)  # Сохраняем с текущим доктором
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MedicationDetailUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        return Medication.objects.filter(doctor__user=user)
+    def get_object(self, pk):
+        try:
+            return Medication.objects.get(pk=pk, doctor__user=self.request.user)
+        except Medication.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        """Получить детальную информацию о препарате"""
+        medication = self.get_object(pk)
+        if not medication:
+            return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = MedicationSerializer(medication)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        """Обновить информацию о препарате"""
+        medication = self.get_object(pk)
+        if not medication:
+            return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = MedicationSerializer(medication, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -57,14 +98,18 @@ def get_user_profile(request):
 @permission_classes([IsAuthenticated])
 def update_user_profile(request):
     user = request.user
+
     try:
+        # Пытаемся получить профиль доктора
         doctor_profile = user.doctor_profile
-        serializer = ProfileSerializer(instance=doctor_profile, data=request.data,
-                                       partial=True)
+
+        # Создаем сериализатор и передаем данные
+        serializer = ProfileSerializer(instance=doctor_profile, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     except Doctor.DoesNotExist:
@@ -133,4 +178,44 @@ class ProcedureListCreateAPIView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
             serializer.save(doctor=doctor)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AppointmentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.now().date()
+        appointments = Appointment.objects.filter(doctor=request.user.doctor_profile, date__gte=today)
+        serializer = AppointmentSerializer(appointments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = AppointmentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(doctor=request.user.doctor_profile)  # Сохраняем с текущим доктором
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AppointmentDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Appointment.objects.get(pk=pk, doctor=self.request.user.doctor_profile)
+        except Appointment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        appointment = self.get_object(pk)
+        serializer = AppointmentSerializer(appointment)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        appointment = self.get_object(pk)
+        serializer = AppointmentSerializer(appointment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

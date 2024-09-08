@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Doctor, Medication, Patient, Procedure
+from .models import Doctor, Medication, Patient, Procedure, Appointment
 
 User = get_user_model()
 
@@ -30,12 +30,9 @@ class RegisterDoctorSerializer(serializers.Serializer):
         user = User.objects.create_user(**user_data)
 
         # Create the doctor's profile
-        doctor = Doctor.objects.create(user=user, **doctor_data)
+        Doctor.objects.create(user=user, **doctor_data)
 
-        return {
-            'user': UserSerializer(user).data,
-            'doctor': DoctorSerializer(doctor).data
-        }
+        return user
 
     def to_internal_value(self, data):
         # This method ensures that nested serializers are handled properly
@@ -58,6 +55,42 @@ class RegisterDoctorSerializer(serializers.Serializer):
             'user': user_serializer.validated_data,
             'doctor': doctor_serializer.validated_data
         }
+
+
+class UserPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'password']
+
+
+class DoctorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Doctor
+        fields = ['birth_date', 'phone_number']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserPostSerializer()
+
+    class Meta:
+        model = Doctor
+        fields = ['user', 'birth_date', 'phone_number']
+
+    def update(self, instance, validated_data):
+        # Данные для пользователя (email, first_name, last_name)
+        user_data = validated_data.pop('user', None)
+
+        if user_data:
+            user = instance.user
+            for field, value in user_data.items():
+                setattr(user, field, value)
+            user.save()
+
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
@@ -85,14 +118,6 @@ class MedicationSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'quantity']
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
-    class Meta:
-        model = Doctor
-        fields = ['user', 'birth_date', 'phone_number']
-
-
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
@@ -104,3 +129,11 @@ class ProcedureSerializer(serializers.ModelSerializer):
         model = Procedure
         fields = ['id', 'doctor', 'date', 'name', 'patient', 'details']
         read_only_fields = ['doctor']
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    patient = PatientSerializer(read_only=True)  # Вложенный сериализатор для пациента
+
+    class Meta:
+        model = Appointment
+        fields = ['id', 'name', 'date', 'time_from', 'time_to', 'patient', 'comment']

@@ -118,12 +118,6 @@ class MedicationSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'quantity']
 
 
-class PatientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Patient
-        fields = ['id', 'last_name', 'first_name', 'middle_name', 'phone_number', 'comment', 'is_contact']
-
-
 class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
@@ -131,9 +125,16 @@ class ProcedureSerializer(serializers.ModelSerializer):
         read_only_fields = ['doctor']
 
 
+class PatientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        fields = ['id', 'last_name', 'first_name', 'middle_name', 'phone_number', 'comment', 'is_contact']
+
+
 class AppointmentSerializer(serializers.ModelSerializer):
+    patient_id = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all(), source='patient', write_only=True)
     patient = PatientSerializer(read_only=True)  # Вложенный сериализатор для пациента
 
     class Meta:
         model = Appointment
-        fields = ['id', 'name', 'date', 'time_from', 'time_to', 'patient', 'comment']
+        fields = ['id', 'name', 'date', 'time_from', 'time_to', 'patient', 'patient_id', 'comment']

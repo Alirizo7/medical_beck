@@ -82,6 +82,8 @@ class Procedure(models.Model):
     name = models.CharField(max_length=100)
     details = models.TextField(blank=True, null=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='procedures')
+    created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
+    image = models.ImageField(upload_to='file/images/', null=True, blank=True)
 
     def __str__(self):
         return self.name

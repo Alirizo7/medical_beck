@@ -109,8 +109,16 @@ class MedicationSerializer(serializers.ModelSerializer):
 class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
-        fields = ['id', 'doctor', 'date', 'name', 'patient', 'details']
+        fields = ['id', 'doctor', 'date', 'name', 'details', 'patient', 'image']  # Добавляем поле image
         read_only_fields = ['doctor']
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.details = validated_data.get('details', instance.details)
+        if 'image' in validated_data:
+            instance.image = validated_data['image']
+        instance.save()
+        return instance
 
 
 class PatientSerializer(serializers.ModelSerializer):

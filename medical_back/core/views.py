@@ -1,4 +1,3 @@
-
 from django.http import Http404
 from django.utils import timezone
 from rest_framework import generics
@@ -10,6 +9,7 @@ from .models import Medication, Doctor, Patient, Procedure, Appointment
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import LoginSerializer, MedicationSerializer, ProfileSerializer, \
     PatientSerializer, ProcedureSerializer, RegisterDoctorSerializer, AppointmentSerializer
 
@@ -162,9 +162,9 @@ class ProcedureListCreateAPIView(APIView):
     def get(self, request, patient_id=None):
         if patient_id:
             patient = get_object_or_404(Patient, id=patient_id)
-            procedures = Procedure.objects.filter(patient=patient)
+            procedures = Procedure.objects.filter(patient=patient).order_by('-date')
         else:
-            procedures = Procedure.objects.all()
+            procedures = Procedure.objects.all().order_by('-date')
 
         serializer = ProcedureSerializer(procedures, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -178,6 +178,24 @@ class ProcedureListCreateAPIView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
             serializer.save(doctor=doctor)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProcedureDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # Добавляем парсеры для загрузки файлов
+
+    def get(self, request, pk):
+        procedure = get_object_or_404(Procedure, pk=pk)
+        serializer = ProcedureSerializer(procedure)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        procedure = get_object_or_404(Procedure, pk=pk)
+        serializer = ProcedureSerializer(procedure, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

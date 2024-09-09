@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Doctor, Medication, Patient, Procedure, Appointment, CustomUser
+from .models import Doctor, Medication, Patient, Procedure, Appointment, CustomUser, Anamesis
 
 User = get_user_model()
 
@@ -104,6 +104,12 @@ class MedicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medication
         fields = ['id', 'name', 'quantity']
+
+
+class AnamesisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Anamesis
+        fields = ['id', 'name', 'description']
 
 
 class ProcedureSerializer(serializers.ModelSerializer):

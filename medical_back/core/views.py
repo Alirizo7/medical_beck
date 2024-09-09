@@ -5,13 +5,13 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from .models import Medication, Doctor, Patient, Procedure, Appointment
+from .models import Medication, Doctor, Patient, Procedure, Appointment, Anamesis, Images
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import LoginSerializer, MedicationSerializer, ProfileSerializer, \
-    PatientSerializer, ProcedureSerializer, RegisterDoctorSerializer, AppointmentSerializer
+    PatientSerializer, ProcedureSerializer, RegisterDoctorSerializer, AppointmentSerializer, AnamesisSerializer
 
 
 @api_view(['POST'])
@@ -237,3 +237,90 @@ class AppointmentDetailAPIView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AnamesisAPIView(APIView):
+
+    def get(self, request):
+        user = request.user
+        anamesis = Anamesis.objects.filter(doctor__user=user)
+        serializer = AnamesisSerializer(anamesis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = AnamesisSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(doctor=request.user.doctor_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AnamesisDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Anamesis.objects.get(pk=pk, doctor__user=self.request.user)
+        except Anamesis.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        """Получить детальную информацию о препарате"""
+        anamesis = self.get_object(pk)
+        if not anamesis:
+            return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AnamesisSerializer(anamesis)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        """Обновить информацию о препарате"""
+        anamesis = self.get_object(pk)
+        if not anamesis:
+            return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AnamesisSerializer(anamesis, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UploadProcedureImageAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # Для загрузки файлов
+
+    def post(self, request, pk):
+        procedure = get_object_or_404(Procedure, pk=pk)
+        files = request.FILES.getlist('images')  # Получаем список файлов
+
+        if not files:
+            return Response({"error": "Нет изображений для загрузки"}, status=status.HTTP_400_BAD_REQUEST)
+
+        for file in files:
+            Images.objects.create(procedure=procedure, thumbnail=file)
+
+        return Response({"success": "Изображения успешно загружены"}, status=status.HTTP_201_CREATED)
+
+
+class DeleteProcedureImageAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk, image_id):
+        """Удалить изображение по его ID"""
+        try:
+            image = Images.objects.get(pk=image_id, procedure_id=pk)
+            image.thumbnail.delete()  # Удаляем сам файл
+            image.delete()  # Удаляем запись из БД
+            return Response({"success": "Изображение успешно удалено"}, status=status.HTTP_204_NO_CONTENT)
+        except Images.DoesNotExist:
+            return Response({"error": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ProcedureImagesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        """Получить все изображения, связанные с процедурой"""
+        procedure = get_object_or_404(Procedure, pk=pk)
+        images = Images.objects.filter(procedure=procedure)
+        images_data = [{'id': img.id, 'url': img.thumbnail.url} for img in images]
+        return Response(images_data, status=status.HTTP_200_OK)

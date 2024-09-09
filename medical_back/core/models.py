@@ -103,3 +103,20 @@ class Appointment(models.Model):
 
     class Meta:
         ordering = ['date', 'time_from']
+
+
+class Anamesis(models.Model):
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='anamesis')
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+
+class Images(models.Model):
+    thumbnail = models.ImageField(upload_to='file/images/', null=True)
+    procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE, related_name='images')
+
+    def __str__(self):
+        return self.procedure.name

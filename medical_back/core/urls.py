@@ -3,7 +3,8 @@
 from django.urls import path
 from .views import register_doctor, login_doctor, get_user_profile, update_user_profile, \
     manage_patients, update_patient, ProcedureListCreateAPIView, MedicationAPIView, MedicationDetailUpdateAPIView, \
-    MedicationCreateAPIView, AppointmentAPIView, AppointmentDetailAPIView, ProcedureDetailAPIView
+    MedicationCreateAPIView, AppointmentAPIView, AppointmentDetailAPIView, ProcedureDetailAPIView, AnamesisAPIView, \
+    AnamesisDetailAPIView, UploadProcedureImageAPIView, DeleteProcedureImageAPIView, ProcedureImagesAPIView
 
 urlpatterns = [
     path('register/', register_doctor, name='register_doctor'),
@@ -21,5 +22,13 @@ urlpatterns = [
     path('procedures_update/<int:pk>/', ProcedureDetailAPIView.as_view(), name='procedure-detail'),
     path('appointments/', AppointmentAPIView.as_view(), name='appointments-list-create'),
     path('appointments/<int:pk>/', AppointmentDetailAPIView.as_view(), name='appointment-detail'),
+
+    path('anamesis/', AnamesisAPIView.as_view(), name='anamesis-list'),
+    path('anamesis/<int:pk>/', AnamesisDetailAPIView.as_view(), name='anamesis-detail-update'),
+
+    path('procedures/<int:pk>/images/', ProcedureImagesAPIView.as_view(), name='procedure-images'),
+    path('procedures/<int:pk>/upload-images/', UploadProcedureImageAPIView.as_view(), name='upload-procedure-images'),
+    path('procedures/<int:pk>/images/<int:image_id>/delete/', DeleteProcedureImageAPIView.as_view(),
+         name='delete-procedure-image'),
 
 ]

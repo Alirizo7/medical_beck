@@ -122,10 +122,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),  # Токен доступа действует год
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=365),  # Токен обновления действует год
+    'ROTATE_REFRESH_TOKENS': False,  # Не вращать токены
+    'BLACKLIST_AFTER_ROTATION': True,  # Включить список отзыва токенов
 }
 
 # Internationalization

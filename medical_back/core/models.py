@@ -107,6 +107,7 @@ class Appointment(models.Model):
 
 class Anamesis(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='anamesis')
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, null=True, blank=True, related_name='anamesis')
     name = models.CharField(max_length=255)
     description = models.TextField()
 

@@ -255,6 +255,16 @@ class AnamesisAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class AnamesisPatientIdAPIView(APIView):
+
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Patient, id=patient_id)
+        anamesis = Anamesis.objects.filter(patient=patient)
+        print(anamesis)
+        serializer = AnamesisSerializer(anamesis, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class AnamesisDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

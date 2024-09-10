@@ -4,7 +4,8 @@ from django.urls import path
 from .views import register_doctor, login_doctor, get_user_profile, update_user_profile, \
     manage_patients, update_patient, ProcedureListCreateAPIView, MedicationAPIView, MedicationDetailUpdateAPIView, \
     MedicationCreateAPIView, AppointmentAPIView, AppointmentDetailAPIView, ProcedureDetailAPIView, AnamesisAPIView, \
-    AnamesisDetailAPIView, UploadProcedureImageAPIView, DeleteProcedureImageAPIView, ProcedureImagesAPIView
+    AnamesisDetailAPIView, UploadProcedureImageAPIView, DeleteProcedureImageAPIView, ProcedureImagesAPIView, \
+    AnamesisPatientIdAPIView
 
 urlpatterns = [
     path('register/', register_doctor, name='register_doctor'),
@@ -24,6 +25,7 @@ urlpatterns = [
     path('appointments/<int:pk>/', AppointmentDetailAPIView.as_view(), name='appointment-detail'),
 
     path('anamesis/', AnamesisAPIView.as_view(), name='anamesis-list'),
+    path('anamesis_get/<patient_id>/', AnamesisPatientIdAPIView.as_view(), name='anamesis-patient-list'),
     path('anamesis/<int:pk>/', AnamesisDetailAPIView.as_view(), name='anamesis-detail-update'),
 
     path('procedures/<int:pk>/images/', ProcedureImagesAPIView.as_view(), name='procedure-images'),

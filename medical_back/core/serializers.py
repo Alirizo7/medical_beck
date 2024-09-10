@@ -107,9 +107,11 @@ class MedicationSerializer(serializers.ModelSerializer):
 
 
 class AnamesisSerializer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all(), required=False)
+
     class Meta:
         model = Anamesis
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'patient']
 
 
 class ProcedureSerializer(serializers.ModelSerializer):

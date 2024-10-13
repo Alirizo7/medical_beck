@@ -1,17 +1,20 @@
+from django.contrib.auth.hashers import make_password
 from django.http import Http404
 from django.utils import timezone
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+import requests
 
-from .models import Medication, Doctor, Patient, Procedure, Appointment, Anamesis, Images
+from .models import Medication, Doctor, Patient, Procedure, Appointment, Anamesis, Images, CustomUser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import LoginSerializer, MedicationSerializer, ProfileSerializer, \
     PatientSerializer, ProcedureSerializer, RegisterDoctorSerializer, AppointmentSerializer, AnamesisSerializer
+from .utils import generate_verification_code, send_verification_email
 
 
 @api_view(['POST'])
@@ -329,8 +332,64 @@ class ProcedureImagesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        """Получить все изображения, связанные с процедурой"""
         procedure = get_object_or_404(Procedure, pk=pk)
         images = Images.objects.filter(procedure=procedure)
         images_data = [{'id': img.id, 'url': img.thumbnail.url} for img in images]
         return Response(images_data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def request_verification_code(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({"error": "Email is required."}, 400)
+
+    code = generate_verification_code()
+
+    request.session['verification_code'] = code
+    request.session['email'] = email
+
+    if send_verification_email(email, code):
+        return Response({"success": "Verification code sent."}, 200)
+    else:
+        return Response({"error": "Failed to send verification email."}, 500)
+
+
+@api_view(['POST'])
+def verify_code(request):
+    email = request.data.get('email')
+    code = request.data.get('code')
+
+    stored_code = request.session.get('verification_code')
+    stored_email = request.session.get('email')
+
+    if email != stored_email:
+        return Response({"error": "Email does not match."}, 400)
+
+    if code != stored_code:
+        return Response({"error": "Invalid verification code."}, 400)
+
+    request.session.pop('verification_code')
+    request.session.pop('email')
+
+    return Response({"success": "Email verified."}, 200)
+
+
+@api_view(['POST'])
+def change_password(request):
+    email = request.data.get('email')
+    new_password = request.data.get('new_password')
+    confirm_password = request.data.get('confirm_password')
+
+    if new_password != confirm_password:
+        return Response({"error": "Пароли не совпадают"}, 400)
+
+    try:
+        user = CustomUser.objects.get(email=email)
+        user.password = make_password(new_password)
+        user.save()
+        return Response({"success": "Пароль успешно изменен"}, 200)
+    except CustomUser.DoesNotExist:
+        return Response({"error": "Пользователь не найден"}, 404)
+
+

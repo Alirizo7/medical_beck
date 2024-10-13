@@ -5,7 +5,7 @@ from .views import register_doctor, login_doctor, get_user_profile, update_user_
     manage_patients, update_patient, ProcedureListCreateAPIView, MedicationAPIView, MedicationDetailUpdateAPIView, \
     MedicationCreateAPIView, AppointmentAPIView, AppointmentDetailAPIView, ProcedureDetailAPIView, AnamesisAPIView, \
     AnamesisDetailAPIView, UploadProcedureImageAPIView, DeleteProcedureImageAPIView, ProcedureImagesAPIView, \
-    AnamesisPatientIdAPIView
+    AnamesisPatientIdAPIView, request_verification_code, verify_code, change_password
 
 urlpatterns = [
     path('register/', register_doctor, name='register_doctor'),
@@ -33,4 +33,7 @@ urlpatterns = [
     path('procedures/<int:pk>/images/<int:image_id>/delete/', DeleteProcedureImageAPIView.as_view(),
          name='delete-procedure-image'),
 
+    path('request-verification/', request_verification_code, name='request_verification_code'),
+    path('verify-code/', verify_code, name='verify_code'),
+    path('change-password/', change_password, name='change_password'),
 ]

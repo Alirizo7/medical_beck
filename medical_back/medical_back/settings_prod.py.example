@@ -32,13 +32,12 @@ sentry_sdk.init(
 
 FRONTEND_DOMAIN = 'https://app.crmneo.com'
 
-EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = ''  # SendGrid API Key
-SERVER_EMAIL = EMAIL_HOST_USER
-DEFAULT_FROM_EMAIL = ''
-
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'alirizok82@gmail.com'
+EMAIL_HOST_PASSWORD = 'qpaa hppp lqfg mdzu'
+DEFAULT_FROM_EMAIL = 'alirizok82@gmail.com'
 
 STATIC_ROOT = 'static'
 MEDIA_ROOT = 'uploads'

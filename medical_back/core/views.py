@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from django.http import Http404
+from django.shortcuts import render
 from django.utils import timezone
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
@@ -395,3 +396,7 @@ def change_password(request):
         return Response({"success": "Пароль успешно изменен"}, 200)
     except CustomUser.DoesNotExist:
         return Response({"error": "Пользователь не найден"}, 404)
+
+
+def SupportView(request):
+    return render(request, 'index.html')

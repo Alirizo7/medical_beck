@@ -51,7 +51,7 @@ class MedicationCreateAPIView(APIView):
     def post(self, request):
         serializer = MedicationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(doctor=request.user.doctor_profile)  # Сохраняем с текущим доктором
+            serializer.save(doctor=request.user.doctor_profile)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -66,7 +66,6 @@ class MedicationDetailUpdateAPIView(APIView):
             return None
 
     def get(self, request, pk):
-        """Получить детальную информацию о препарате"""
         medication = self.get_object(pk)
         if not medication:
             return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
@@ -74,7 +73,6 @@ class MedicationDetailUpdateAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        """Обновить информацию о препарате"""
         medication = self.get_object(pk)
         if not medication:
             return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
@@ -103,10 +101,8 @@ def update_user_profile(request):
     user = request.user
 
     try:
-        # Пытаемся получить профиль доктора
         doctor_profile = user.doctor_profile
 
-        # Создаем сериализатор и передаем данные
         serializer = ProfileSerializer(instance=doctor_profile, data=request.data, partial=True)
 
         if serializer.is_valid():
@@ -149,14 +145,25 @@ def update_patient(request, patient_id):
     try:
         patient = Patient.objects.get(id=patient_id)
     except Patient.DoesNotExist:
-        return Response({'error': 'Пациент не найден'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Пациент не найден'}, 404)
 
     serializer = PatientSerializer(patient, data=request.data,
                                    partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, 400)
+
+
+class UpdatePatientView(APIView):
+
+    def put(self, request, pk):
+        patient = get_object_or_404(Patient, pk=pk)
+        serializer = PatientSerializer(patient, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(doctor=request.user.doctor_profile)
+            return Response(serializer.data, 200)
+        return Response(serializer.errors, 400)
 
 
 class ProcedureListCreateAPIView(APIView):
@@ -186,7 +193,7 @@ class ProcedureListCreateAPIView(APIView):
 
 class ProcedureDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]  # Добавляем парсеры для загрузки файлов
+    parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, pk):
         procedure = get_object_or_404(Procedure, pk=pk)
@@ -214,7 +221,7 @@ class AppointmentAPIView(APIView):
     def post(self, request):
         serializer = AppointmentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(doctor=request.user.doctor_profile)  # Сохраняем с текущим доктором
+            serializer.save(doctor=request.user.doctor_profile)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -278,7 +285,6 @@ class AnamesisDetailAPIView(APIView):
             return None
 
     def get(self, request, pk):
-        """Получить детальную информацию о препарате"""
         anamesis = self.get_object(pk)
         if not anamesis:
             return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
@@ -286,7 +292,6 @@ class AnamesisDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
-        """Обновить информацию о препарате"""
         anamesis = self.get_object(pk)
         if not anamesis:
             return Response({'error': 'Препарат не найден'}, status=status.HTTP_404_NOT_FOUND)
@@ -299,11 +304,11 @@ class AnamesisDetailAPIView(APIView):
 
 class UploadProcedureImageAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]  # Для загрузки файлов
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, pk):
         procedure = get_object_or_404(Procedure, pk=pk)
-        files = request.FILES.getlist('images')  # Получаем список файлов
+        files = request.FILES.getlist('images')
 
         if not files:
             return Response({"error": "Нет изображений для загрузки"}, status=status.HTTP_400_BAD_REQUEST)
@@ -318,11 +323,10 @@ class DeleteProcedureImageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, image_id):
-        """Удалить изображение по его ID"""
         try:
             image = Images.objects.get(pk=image_id, procedure_id=pk)
-            image.thumbnail.delete()  # Удаляем сам файл
-            image.delete()  # Удаляем запись из БД
+            image.thumbnail.delete()
+            image.delete()
             return Response({"success": "Изображение успешно удалено"}, status=status.HTTP_204_NO_CONTENT)
         except Images.DoesNotExist:
             return Response({"error": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
@@ -391,5 +395,3 @@ def change_password(request):
         return Response({"success": "Пароль успешно изменен"}, 200)
     except CustomUser.DoesNotExist:
         return Response({"error": "Пользователь не найден"}, 404)
-
-

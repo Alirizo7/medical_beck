@@ -22,18 +22,16 @@ class RegisterDoctorSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
-    password = serializers.CharField(write_only=True, min_length=6)  # Добавляем минимальную длину
+    password = serializers.CharField(write_only=True, min_length=6)
     birth_date = serializers.DateField(required=False)
     phone_number = serializers.CharField(max_length=15, required=False)
 
     def validate_password(self, value):
-        """Проверка, что пароль не слишком простой"""
         if len(value) < 6:
             raise serializers.ValidationError("Пароль должен содержать минимум 6 символов.")
         return value
 
     def create(self, validated_data):
-        # Создаем пользователя
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
@@ -41,10 +39,9 @@ class RegisterDoctorSerializer(serializers.Serializer):
             password=validated_data['password'],
         )
 
-        # Сохраняем профиль врача
         Doctor.objects.create(
             user=user,
-            birth_date=validated_data['birth_date'],  # birth_date и phone_number должны сохраняться в Doctor
+            birth_date=validated_data['birth_date'],
             phone_number=validated_data['phone_number']
         )
 
@@ -65,7 +62,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'birth_date', 'phone_number']
 
     def update(self, instance, validated_data):
-        # Данные для пользователя (email, first_name, last_name)
         user_data = validated_data.pop('user', None)
 
         if user_data:
@@ -117,7 +113,7 @@ class AnamesisSerializer(serializers.ModelSerializer):
 class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
-        fields = ['id', 'doctor', 'date', 'name', 'details', 'patient', 'image']  # Добавляем поле image
+        fields = ['id', 'doctor', 'date', 'name', 'details', 'patient', 'image']
         read_only_fields = ['doctor']
 
     def update(self, instance, validated_data):
@@ -132,12 +128,12 @@ class ProcedureSerializer(serializers.ModelSerializer):
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
-        fields = ['id', 'last_name', 'first_name', 'middle_name', 'phone_number', 'comment', 'is_contact']
+        fields = ['id', 'last_name', 'first_name', 'middle_name', 'phone_number', 'comment', 'is_contact', 'birth_date']
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_id = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all(), source='patient', write_only=True)
-    patient = PatientSerializer(read_only=True)  # Вложенный сериализатор для пациента
+    patient = PatientSerializer(read_only=True)
 
     class Meta:
         model = Appointment

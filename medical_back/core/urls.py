@@ -5,7 +5,8 @@ from .views import register_doctor, login_doctor, get_user_profile, update_user_
     manage_patients, update_patient, ProcedureListCreateAPIView, MedicationAPIView, MedicationDetailUpdateAPIView, \
     MedicationCreateAPIView, AppointmentAPIView, AppointmentDetailAPIView, ProcedureDetailAPIView, AnamesisAPIView, \
     AnamesisDetailAPIView, UploadProcedureImageAPIView, DeleteProcedureImageAPIView, ProcedureImagesAPIView, \
-    AnamesisPatientIdAPIView, request_verification_code, verify_code, change_password, UpdatePatientView
+    AnamesisPatientIdAPIView, request_verification_code, verify_code, change_password, UpdatePatientView, \
+    UserDeactivateAPIView
 
 urlpatterns = [
     path('register/', register_doctor, name='register_doctor'),
@@ -41,4 +42,6 @@ urlpatterns = [
     path('request-verification/', request_verification_code, name='request_verification_code'),
     path('verify-code/', verify_code, name='verify_code'),
     path('change-password/', change_password, name='change_password'),
+
+    path('user/deactivate/', UserDeactivateAPIView.as_view(), name='user_deactivate'),
 ]

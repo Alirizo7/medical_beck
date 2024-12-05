@@ -400,3 +400,16 @@ def change_password(request):
 
 def SupportView(request):
     return render(request, 'index.html')
+
+
+class UserDeactivateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        try:
+            user.is_active = False
+            user.save()
+            return Response({"success": "Пользователь деактивирован"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -14,8 +14,6 @@ def send_verification_email(email, code):
     message = f"Use this code to verify your email: {code}"
     from_email = 'alirizok82@gmail.com'
 
-    print(f"Sending email from: {from_email}")
-
     try:
         send_mail(subject, message, from_email, [email])
         return True

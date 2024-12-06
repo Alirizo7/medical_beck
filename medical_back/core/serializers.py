@@ -41,7 +41,6 @@ class RegisterDoctorSerializer(serializers.Serializer):
 
         Doctor.objects.create(
             user=user,
-            birth_date=validated_data['birth_date'],
             phone_number=validated_data['phone_number']
         )
 

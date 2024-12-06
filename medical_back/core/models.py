@@ -47,7 +47,7 @@ class CustomUser(AbstractBaseUser):
 
 class Doctor(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor_profile')
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=15)
 
     def __str__(self):
@@ -63,7 +63,6 @@ class Patient(models.Model):
     comment = models.TextField(blank=True, null=True)
     is_contact = models.BooleanField(default=False)
     birth_date = models.DateField(null=True, blank=True)
-
 
     def __str__(self):
         return f'{self.last_name} {self.first_name}'

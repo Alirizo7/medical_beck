@@ -51,10 +51,9 @@ class MedicationAPIView(APIView):
 class MedicationCreateAPIView(APIView):
     def post(self, request):
         serializer = MedicationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(doctor=request.user.doctor_profile)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(doctor=request.user.doctor_profile)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MedicationDetailUpdateAPIView(APIView):
@@ -331,6 +330,15 @@ class DeleteProcedureImageAPIView(APIView):
             return Response({"success": "Изображение успешно удалено"}, status=status.HTTP_204_NO_CONTENT)
         except Images.DoesNotExist:
             return Response({"error": "Изображение не найдено"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MedicationDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        medication = get_object_or_404(Medication, pk=pk)
+        medication.delete()
+        return Response({'message': 'success'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ProcedureImagesAPIView(APIView):

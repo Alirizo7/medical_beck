@@ -96,9 +96,10 @@ class LoginSerializer(serializers.Serializer):
 
 
 class MedicationSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Medication
-        fields = ['id', 'name', 'quantity']
+        fields = ('id', 'name', 'quantity')
 
 
 class AnamesisSerializer(serializers.ModelSerializer):
